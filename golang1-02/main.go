@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	epsilon := math.Nextafter(1, 2) - 1 // this is machine epsilon to work with floating points
 	var snum1, snum2, op string
 	var res float64
 
@@ -40,7 +41,7 @@ func main() {
 	case "*":
 		res = num1 * num2
 	case "/":
-		res = num1 / num2
+		res = num1 / (num2 + epsilon)
 	case "^":
 		res = math.Pow(num1, num2)
 	case "Min":
