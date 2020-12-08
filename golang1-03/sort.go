@@ -26,7 +26,7 @@ func bubbleSort(arr []int) []int {
 
 func insertionSort(arr []int) []int {
 	n := len(arr)
-	nums := make([]int, len(arr))
+	nums := make([]int, n)
 	copy(nums, arr)
 	for i := 1; i < n; i++ {
 		for j := i; j > 0; j-- {
