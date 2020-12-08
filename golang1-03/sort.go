@@ -3,33 +3,37 @@ package main
 import "fmt"
 
 func main() {
-	var arr1 []int = []int{5, 3, 6, 8, 1, 2}
-	var arr2 []int = []int{5, 3, 6, 8, 1, 2}
-	fmt.Println(bubbleSort(arr1))
-	fmt.Println(insertionSort(arr2))
+	var arr []int = []int{5, 3, 6, 8, 1, 2}
+	fmt.Println(bubbleSort(arr))
+	fmt.Println(insertionSort(arr))
+	fmt.Println(arr)
 
 }
 
 func bubbleSort(arr []int) []int {
-	for i := len(arr); i > 0; i-- {
+	n := len(arr)
+	nums := make([]int, n)
+	copy(nums, arr)
+	for i := n; i > 0; i-- {
 		for j := 1; j < i; j++ {
-			if arr[j-1] > arr[j] {
-				arr[j], arr[j-1] = arr[j-1], arr[j]
+			if nums[j-1] > nums[j] {
+				nums[j], nums[j-1] = nums[j-1], nums[j]
 			}
 		}
 	}
-	return arr
+	return nums
 }
 
 func insertionSort(arr []int) []int {
-	for i := 1; i < len(arr); i++ {
-		j := i
-		for j > 0 {
-			if arr[j-1] > arr[j] {
-				arr[j], arr[j-1] = arr[j-1], arr[j]
+	n := len(arr)
+	nums := make([]int, len(arr))
+	copy(nums, arr)
+	for i := 1; i < n; i++ {
+		for j := i; j > 0; j-- {
+			if nums[j-1] > nums[j] {
+				nums[j], nums[j-1] = nums[j-1], nums[j]
 			}
-			j--
 		}
 	}
-	return arr
+	return nums
 }
