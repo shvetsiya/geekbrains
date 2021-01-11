@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func main() {
+func main1() {
 	epsilon := math.Nextafter(1, 2) - 1 // this is machine epsilon to work with floating points
 	var snum1, snum2, op string
 	var res float64

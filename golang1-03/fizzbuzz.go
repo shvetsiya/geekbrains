@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-func main() {
+func main1() {
 	for i := 1; i <= 100; i++ {
 		res := ""
 		if i%3 == 0 {
