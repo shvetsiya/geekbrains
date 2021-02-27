@@ -7,18 +7,21 @@ import (
 )
 
 func main() {
+	defer func() {
+		if v := recover(); v != nil {
+			fmt.Printf("Be carefull with the error: %v", v)
+		}
+	}()
+
 	f, err := os.Create("new_file")
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 
-	defer func() {
-		if v := recover(); v != nil {
-			fmt.Printf("Be carefull with the error: %v that happend at time: %v", v, time.Now())
-		}
-	}()
-	var a int
-	fmt.Println(1 / a)
+	err = fmt.Errorf("An error occurred at: %v", time.Now())
+	if err != nil {
+		panic(err)
+	}
 
 }
