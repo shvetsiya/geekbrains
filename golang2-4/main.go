@@ -5,6 +5,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/shvetsiya/geekbrains/golang2-4/mymaps"
 )
 
 const goroutinsNums int = 1000
@@ -13,13 +15,13 @@ func main() {
 	atomicIncrement()
 	mutexIncrement()
 
-	setMutex := NewSetMutex()
-	setRMutex := NewSetRMutex()
+	setMutex := mymaps.NewSetMutex()
+	//setRMutex := mymaps.NewSetRMutex()
 	stime := time.Now()
 	for i := 0; i < 1000; i++ {
-		setMutex.Add(float)
+		setMutex.Add(float64(i))
 	}
-	fmt.Printf()
+	fmt.Println(stime)
 }
 
 func atomicIncrement() {

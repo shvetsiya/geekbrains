@@ -4,7 +4,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	"database/sql"
-	"fmt"
 	"sync"
 )
 
@@ -13,6 +12,7 @@ var (
 	db   *sql.DB
 )
 
+/*
 func main() {
 	db, err := DbMutex()
 	if err != nil {
@@ -24,7 +24,7 @@ func main() {
 	err = r.Scan(&v)
 	fmt.Println(v, err)
 }
-
+*/
 func DbMutex() (*sql.DB, error) {
 	lock.Lock()
 	defer lock.Unlock()
