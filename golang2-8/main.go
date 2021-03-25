@@ -19,7 +19,7 @@ type Result struct {
 // it uses concurrently recursive walk function
 //
 // Example to use:
-// go run ./main.go -d ./test1 -r true
+// go run ./main.go -d ./test -r true
 func main() {
 	var (
 		dir     string
