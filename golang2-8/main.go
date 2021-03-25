@@ -15,20 +15,18 @@ type Result struct {
 	hash string
 }
 
-// Fibonacci0 finds nth Fibonacci number
-// It uses recursive formula to find the numbers: Fn = F(n-1) + F(n-2)
+// This function implements file de-duplication (dedup)
+// it uses concurrently recursive walk function
 //
-// Special cases are:
-// F(0) = 0
-// F(1) = 1
-// for more details see https://en.wikipedia.org/wiki/Fibonacci_number
+// Example to use:
+// go run ./main.go -d ./test1 -r true
 func main() {
 	var (
 		dir     string
 		isDedup bool
 	)
 	flag.StringVar(&dir, "d", ".", "Path to a dir where we should find duplicates")
-	flag.BoolVar(&isDedup, "r", false, "Action for remove duplicates")
+	flag.BoolVar(&isDedup, "r", false, "Action to remove duplicates")
 	var help = flag.Bool("h", false, "Display this message")
 	flag.Parse()
 	if *help {
