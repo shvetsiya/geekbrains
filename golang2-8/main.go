@@ -5,8 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
+
+	"go.uber.org/zap"
 )
+
+var logger *zap.Logger
 
 const numberGoroutines = 100
 
@@ -21,10 +26,17 @@ type Result struct {
 // Example to use:
 // go run ./main.go -d ./test -r true
 func main() {
+	InitLogger()
+	defer logger.Sync()
+	logger = logger.With(zap.String("host", "srv42")).With(zap.Uint64("uid", 100500))
+
 	var (
 		dir     string
 		isDedup bool
 	)
+
+	logger.Info("Parse command line arguments")
+
 	flag.StringVar(&dir, "d", ".", "Path to a dir where we should find duplicates")
 	flag.BoolVar(&isDedup, "r", false, "Action to remove duplicates")
 	var help = flag.Bool("h", false, "Display this message")
@@ -41,14 +53,18 @@ func main() {
 		os.Exit(-1)
 	}
 
+	logger.Info("run main recursive function with " + strconv.Itoa(numberGoroutines) + "goroutines")
 	counter, err := run(dir, numberGoroutines)
 	if err != nil {
-		fmt.Printf("failed! %v\n", err)
+		logger.Error("failed to run thanks to " + err.Error())
 		os.Exit(1)
 	}
 
+	logger.Info("remove duplicates " + strconv.FormatBool(isDedup) + " if necessary and show the outcome")
 	for hash, files := range counter {
 		if len(files) > 1 {
+			logger.Info("remove duplicates " + strconv.FormatBool(isDedup) + " if necessary and show the outcome")
+
 			fmt.Printf("Found %d duplicates for %v: \n", len(files), hash)
 			for i, f := range files {
 				// remove elements other than a first one
@@ -63,6 +79,10 @@ func main() {
 			}
 		}
 	}
+}
+
+func InitLogger() {
+	logger, _ = zap.NewProduction()
 }
 
 func run(dir string, workers int) (map[string][]string, error) {
@@ -92,7 +112,7 @@ func run(dir string, workers int) (map[string][]string, error) {
 func search(dir string, input chan<- string) {
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			logger.Error("file corrupted" + err.Error())
 		} else if info.Mode().IsRegular() {
 			input <- path
 		}
@@ -102,10 +122,11 @@ func search(dir string, input chan<- string) {
 }
 
 func startWorker(input <-chan string, results chan<- *Result, wg *sync.WaitGroup) {
+	logger.Info("")
 	for file := range input {
 		fs, err := os.Stat(file)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			logger.Error("file corrupted" + err.Error())
 			continue
 		}
 		results <- &Result{
