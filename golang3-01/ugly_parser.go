@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-// парсим страницу
+// parse html page
 func parse(url string) (*html.Node, error) {
 	// что здесь должно быть вместо http.Get? :)
 	r, err := http.Get(url)
@@ -21,7 +21,7 @@ func parse(url string) (*html.Node, error) {
 	return b, err
 }
 
-// ищем заголовок на странице
+// pageTitle finds page title
 func pageTitle(n *html.Node) string {
 	var title string
 	if n.Type == html.ElementNode && n.Data == "title" {
@@ -36,7 +36,7 @@ func pageTitle(n *html.Node) string {
 	return title
 }
 
-// ищем все ссылки на страницы. Используем мапку чтобы избежать дубликатов
+// look for links in the page, use map to exclude duplicates
 func pageLinks(links map[string]struct{}, n *html.Node) map[string]struct{} {
 	if links == nil {
 		links = make(map[string]struct{})
@@ -48,7 +48,7 @@ func pageLinks(links map[string]struct{}, n *html.Node) map[string]struct{} {
 				continue
 			}
 
-			// костылик для простоты
+			// it is done for simplicity
 			if _, ok := links[a.Val]; !ok && len(a.Val) > 2 && a.Val[:2] == "//" {
 				links["http://"+a.Val[2:]] = struct{}{}
 			}

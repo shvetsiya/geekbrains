@@ -11,29 +11,28 @@ import (
 )
 
 const (
-	// максимально допустимое число ошибок при парсинге
+	// max numbers of errers allowed during parsing
 	errorsLimit = 100000
 
-	// число результатов, которые хотим получить
+	// number of results we want to achieve
 	resultsLimit = 10000
 )
 
 var (
-	// адрес в интернете (например, https://en.wikipedia.org/wiki/Lionel_Messi)
+	// url address (e.g. https://en.wikipedia.org/wiki/Lionel_Messi)
 	url string
 
-	// насколько глубоко нам надо смотреть (например, 10)
+	// how deep we want to look for (e.g. 10)
 	depthLimit int
 )
 
-// Как вы помните, функция инициализации стартует первой
+// init function starts first
 func init() {
-	// задаём и парсим флаги
 	flag.StringVar(&url, "url", "", "url address")
 	flag.IntVar(&depthLimit, "depth", 3, "max depth for run")
 	flag.Parse()
 
-	// Проверяем обязательное условие
+	// check necessary condition
 	if url == "" {
 		log.Print("no url set by flag")
 		flag.PrintDefaults()
@@ -43,42 +42,56 @@ func init() {
 
 func main() {
 	started := time.Now()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	go watchSignals(cancel)
-	defer cancel()
-
 	crawler := newCrawler(depthLimit)
 
-	// создаём канал для результатов
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	go watchSignals(ctx, cancel, crawler)
+	defer cancel()
+
+	// create chan for results
 	results := make(chan crawlResult)
 
-	// запускаем горутину для чтения из каналов
+	// run goroutine to read from channels
 	done := watchCrawler(ctx, results, errorsLimit, resultsLimit)
 
-	// запуск основной логики
-	// внутри есть рекурсивные запуски анализа в других горутинах
+	// the main logic is here. The inner implementation uses recurcive calls inside other goroutines
 	crawler.run(ctx, url, results, 0)
 
-	// ждём завершения работы чтения в своей горутине
 	<-done
 
 	log.Println(time.Since(started))
 }
 
-// ловим сигналы выключения
-func watchSignals(cancel context.CancelFunc) {
+func watchSignals(ctx context.Context, cancel context.CancelFunc, crawler *crawler) {
 	osSignalChan := make(chan os.Signal)
 
 	signal.Notify(osSignalChan,
 		syscall.SIGINT,
 		syscall.SIGTERM)
 
-	sig := <-osSignalChan
-	log.Printf("got signal %q", sig.String())
+	depthChan := make(chan os.Signal)
+	signal.Notify(depthChan, syscall.SIGUSR1)
 
-	// если сигнал получен, отменяем контекст работы
-	cancel()
+	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("context timeout is exceeded ")
+			// if the signal received, cancel the context
+			cancel()
+			return
+		case sig := <-osSignalChan:
+			log.Printf("got a signal %s", sig.String())
+			// if the signal received, cancel the context
+			cancel()
+			return
+		case sig := <-depthChan:
+			crawler.maxDepth += 2
+			log.Printf("received signal %s to increase max depth to %d", sig.String(), crawler.maxDepth)
+		}
+
+		sig := <-osSignalChan
+		log.Printf("got signal %q", sig.String())
+	}
 }
 
 func watchCrawler(ctx context.Context, results <-chan crawlResult, maxErrors, maxResults int) chan struct{} {
