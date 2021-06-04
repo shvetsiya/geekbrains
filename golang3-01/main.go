@@ -88,9 +88,6 @@ func watchSignals(ctx context.Context, cancel context.CancelFunc, crawler *crawl
 			crawler.maxDepth += 2
 			log.Printf("received signal %s to increase max depth to %d", sig.String(), crawler.maxDepth)
 		}
-
-		sig := <-osSignalChan
-		log.Printf("got signal %q", sig.String())
 	}
 }
 
