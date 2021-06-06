@@ -42,6 +42,7 @@ func main() {
 	var help = flag.Bool("h", false, "Display this message")
 	flag.Parse()
 	if *help {
+		// this output serves for CL purpose only
 		fmt.Println("duplicates is a command line tool to find duplicate files in a folder")
 		fmt.Println("usage: duplicates [options...] path")
 		flag.PrintDefaults()
@@ -65,13 +66,13 @@ func main() {
 		if len(files) > 1 {
 			logger.Info("remove duplicates " + strconv.FormatBool(isDedup) + " if necessary and show the outcome")
 
-			fmt.Printf("Found %d duplicates for %v: \n", len(files), hash)
+			logger.Info("Found " + strconv.Itoa(len(files)) + " duplicates for " + hash + ": \n")
 			for i, f := range files {
 				// remove elements other than a first one
 				if i > 0 && isDedup {
 					err = os.Remove(f)
 					if err != nil {
-						fmt.Printf("can not remove file %s: %s", f, err)
+						logger.Error("can not remove file " + f + ",  " + err.Error())
 					}
 				} else {
 					fmt.Println("-> ", f)
@@ -112,7 +113,7 @@ func run(dir string, workers int) (map[string][]string, error) {
 func search(dir string, input chan<- string) {
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			logger.Error("file corrupted" + err.Error())
+			logger.Error("search function: file corrupted" + err.Error())
 		} else if info.Mode().IsRegular() {
 			input <- path
 		}
@@ -122,11 +123,10 @@ func search(dir string, input chan<- string) {
 }
 
 func startWorker(input <-chan string, results chan<- *Result, wg *sync.WaitGroup) {
-	logger.Info("")
 	for file := range input {
 		fs, err := os.Stat(file)
 		if err != nil {
-			logger.Error("file corrupted" + err.Error())
+			logger.Error("startWorker function: file corrupted" + err.Error())
 			continue
 		}
 		results <- &Result{
