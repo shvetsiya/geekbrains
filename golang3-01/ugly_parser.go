@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -8,17 +9,22 @@ import (
 )
 
 // parse html page
-func parse(url string) (*html.Node, error) {
-	// что здесь должно быть вместо http.Get? :)
-	r, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("can't get page")
+func parse(ctx context.Context, url string) (*html.Node, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		r, err := http.Get(url)
+		if err != nil {
+			return nil, fmt.Errorf("can't get page")
+		}
+
+		b, err := html.Parse(r.Body)
+		if err != nil {
+			return nil, fmt.Errorf("can't parse page")
+		}
+		return b, err
 	}
-	b, err := html.Parse(r.Body)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse page")
-	}
-	return b, err
 }
 
 // pageTitle finds page title
