@@ -1,64 +1,49 @@
 package main
 
 import (
-	"context"
+	"bufio"
 	"fmt"
 	"log"
 	"net"
-	"os/signal"
-	"sync"
-	"syscall"
+	"os"
 	"time"
 )
 
-func main() {
-	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGUSR1)
-	cfg := net.ListenConfig{
-		KeepAlive: time.Minute,
-	}
+var (
+	messages = make(chan string)
+)
 
-	listener, err := cfg.Listen(ctx, "tcp", "localhost:9000")
+func main() {
+	ln, err := net.Listen("tcp", "localhost:9002")
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer ln.Close()
 
-	wg := &sync.WaitGroup{}
-	log.Println("im started!")
-
-	go func() {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Println(err)
-		} else {
-			wg.Add(1)
-			go handleConn(ctx, conn, wg)
-		}
-	}()
-
+	log.Println("Server is listening...")
 	for {
-		select {
-		case <-ctx.Done():
-			log.Println("done")
-			listener.Close()
-			wg.Wait()
-			log.Println("exit")
-			return
+		conn, err := ln.Accept()
+		if err != nil {
+			fmt.Println(err)
+			conn.Close()
+			continue
 		}
+		go handleConn(conn)
 	}
-
 }
 
-func handleConn(ctx context.Context, conn net.Conn, wg *sync.WaitGroup) {
-	defer wg.Done()
+func handleConn(conn net.Conn) {
 	defer conn.Close()
-	// every second the server sends its current time to a client
-	tck := time.NewTicker(time.Second)
+
+	reader := bufio.NewReader(os.Stdin)
 	for {
-		select {
-		case <-ctx.Done():
+
+		fmt.Print("send message:")
+		msg, err := reader.ReadString('\n')
+		if err != nil {
 			return
-		case t := <-tck.C:
-			fmt.Fprintf(conn, "now: %s\n", t)
 		}
+		conn.Write([]byte(msg + "\n"))
+		time.Sleep(1 * time.Second)
 	}
 }

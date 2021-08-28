@@ -1,26 +1,21 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func main() {
-	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGUSR1)
-
-	d := net.Dialer{
-		Timeout:   time.Second,
-		KeepAlive: time.Minute,
-	}
-	conn, err := d.DialContext(ctx, "tcp", "localhost:9000")
+	conn, err := net.Dial("tcp", "localhost:9002")
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(io.Copy(os.Stdout, conn))
+	go func() {
+		io.Copy(os.Stdout, conn)
+	}()
+	io.Copy(conn, os.Stdin) // until you send ^Z
+	fmt.Printf("%s: exit", conn.LocalAddr())
 }
